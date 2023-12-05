@@ -1,1 +1,0 @@
--- Define default hardware proxies for every type of peripheral

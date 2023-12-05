@@ -1,5 +1,4 @@
 -- This is a fairly advanced CUI bootloader for OS selection
-
 do
     local bootable = {}
 
@@ -31,21 +30,21 @@ do
 
     local file = readAll("/boot/minbl.cfg", cd)
 
-    local config, err = load(file)
+    local config, err = load("return "..file)
     if not config then
         error("Unable to load minbl config: "..err)
     end
     config = config()
 
-    local function boot(dev, path)
+    local function boot(dev, path, args)
         if type(dev) == "string" then dev = component.proxy(dev) end
         path = path or "/init.lua"
         local fh = readAll(path, dev)
         local f, ferr = load(fh)
         if not f then
-            error("Unable to boot: "..err)
+            error("Unable to boot: "..ferr)
         end
-        f()
+        f(table.unpack(args))
     end
 
     local function gpu_text(self, text, x, y, align, invert, width)
@@ -73,8 +72,8 @@ do
     end
 
     local function bootDefault()
-        local entry = config.entries[config.default or 1]
-        boot(entry.address, entry.path)
+        local entry = config.bootEntries[config.default or 1]
+        boot(entry.address or computer.getBootAddress(), entry.path, entry.args)
     end
 
     local gpu = component.proxy(component.list("gpu")())
@@ -92,14 +91,15 @@ do
             
         end
     end
-
-    if config.mode ~= 2 and config.mode ~= 3 and gpu then
-        if config.mode == 0 then
-            draw()
-        elseif config.mode == 1 then
-            if computer.pullSignal("key_down", config.timeout) then draw() else bootDefault() end
-        end
-    end
+    bootDefault()
+    
+    -- if config.mode ~= 2 and config.mode ~= 3 and gpu then
+    --     if config.mode == 0 then
+    --         draw()
+    --     elseif config.mode == 1 then
+    --         if computer.pullSignal("key_down", config.timeout) then draw() else bootDefault() end
+    --     end
+    -- end
 
     while true do
         computer.pullSignal()
