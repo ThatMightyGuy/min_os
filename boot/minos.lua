@@ -9,8 +9,12 @@ do
         return str:sub(-#suffix) == suffix
     end
 
+    function _G.panic(source, data)
+        error("panic ["..source.."]: "..data)
+    end
+
     -- Only exact paths. Only current filesystem.
-    function require(path)
+    function _G.require(path)
         if not endswith(path, ".lua") then path = path..".lua" end
         local file, err = bootfs.open(path)
         if err then
@@ -25,7 +29,7 @@ do
         return load(lib)()
     end
 
-    function loadfile(filename, ...)
+    function _G.loadfile(filename, ...)
         if filename:sub(1,1) ~= "/" then
             filename = (os.getenv("PWD") or "/") .. "/" .. filename
         end
@@ -48,7 +52,7 @@ do
         return load(table.concat(buffer), "=" .. filename, ...)
     end
 
-    function dofile(filename)
+    function _G.dofile(filename)
         local program, reason = loadfile(filename)
         if not program then
             return error(reason .. ':' .. filename, 0)
@@ -56,7 +60,7 @@ do
         return program()
     end
 
-    function status(...)
+    function _G.status(...)
         if state == "status" and print then
             print(...)
         end
@@ -64,7 +68,7 @@ do
 
     for i = 1, #modules do
         local mod = modules[i]
-        status("Loading module "..mod)
+        computer.pushSignal("module_load", mod)
         dofile("/lib/modules/"..mod..".lua")
     end
 

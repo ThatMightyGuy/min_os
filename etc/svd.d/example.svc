@@ -1,0 +1,9 @@
+{
+    name="ExampleService",                          -- Human readable service name
+    description="This is an example service that echoes component events",
+    on={"component_added", "component_removed"},    -- List of events to listen for
+    runas="",                                       -- Run as system user
+    where="/",                                      -- Environment root path
+    exec="/bin/echo",                               -- Execute command
+    args={"Event", 1, 3}                            -- Pass event args indices. Use 0 to pass all available arguments
+}
