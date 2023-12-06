@@ -5,50 +5,26 @@ do
 
     local modules = {...}
 
-    local function endswith(str, suffix)
-        return str:sub(-#suffix) == suffix
-    end
-
     function _G.panic(source, data)
         error("panic ["..source.."]: "..data)
     end
 
     -- Only exact paths. Only current filesystem.
-    function _G.require(path)
-        if not endswith(path, ".lua") then path = path..".lua" end
-        local file, err = bootfs.open(path)
-        if err then
-            return error("No such file: `"..path.."`")
-        end
-        local lib = ""
-        repeat
-            local s = bootfs.read(file, math.huge)
-            lib = lib..(s or "")
-        until not s
-        bootfs.close(file)
-        return load(lib)()
-    end
+    
 
-    function _G.loadfile(filename, ...)
-        if filename:sub(1,1) ~= "/" then
-            filename = (os.getenv("PWD") or "/") .. "/" .. filename
-        end
+    function loadfile(filename, ...)
         local handle, open_reason = bootfs.open(filename)
         if not handle then
             return nil, open_reason
         end
         local buffer = {}
-        while true do
-            local data, reason = bootfs.read(handle, 1024)
-            if not data then
-                bootfs.close(handle)
-                if reason then
-                return nil, reason
-                end
-                break
-            end
-            buffer[#buffer + 1] = data
-        end
+
+        repeat
+            local data = bootfs.read(handle, math.huge)
+            table.insert(buffer, data or "")
+        until not data
+        bootfs.close(handle)
+
         return load(table.concat(buffer), "=" .. filename, ...)
     end
 
@@ -66,10 +42,23 @@ do
         end
     end
 
+    local loaded_mods = {}
+    function _G.modprobe(mod)
+        for _, v in ipairs(loaded_mods) do
+            if v == mod then return true end
+        end
+        return false
+    end
+
+    function _G.modload(mod)
+        computer.pushSignal("module_load", mod)
+        loadfile("/lib/modules/"..mod..".lua")()
+        table.insert(loaded_mods, mod)
+    end
+
     for i = 1, #modules do
         local mod = modules[i]
-        computer.pushSignal("module_load", mod)
-        dofile("/lib/modules/"..mod..".lua")
+        modload(mod)
     end
 
     while true do computer.pullSignal() end

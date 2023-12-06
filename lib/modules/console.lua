@@ -1,4 +1,4 @@
-local hwdefaults = require("/lib/hwdefaults")
+local hwdefaults = require("/lib/core/hwdefaults")
 local gpu = hwdefaults.proxy("gpu")
 if not gpu then return end
 

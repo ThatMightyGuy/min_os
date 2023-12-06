@@ -1,8 +1,6 @@
-local hw = {}
-
 local devices = {}
 
-function hw.proxy(dev)
+function _G.proxy(dev)
     local td = type(dev)
     if td == "string" then
         if devices[dev] then return devices[dev] end
@@ -20,5 +18,3 @@ function hw.proxy(dev)
 
     return dev
 end
-
-return hw

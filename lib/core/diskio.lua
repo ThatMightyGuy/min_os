@@ -1,5 +1,7 @@
 local hwaccess = require("/lib/hwaccess")
 
+local diskio = {}
+
 local handlepaths = {}
 
 function handlepaths.set(dev, handle, path)
@@ -9,7 +11,7 @@ function handlepaths.set(dev, handle, path)
     handlepaths[dev][handle] = path
 end
 
-function getfs(dev)
+function diskio.getdisk(dev)
     local err
     dev, err = hwaccess.proxy(dev)
     if not dev then
@@ -20,9 +22,9 @@ function getfs(dev)
     return dev
 end
 
-function open(dev, path, mode)
+function diskio.open(dev, path, mode)
     local err
-    dev, err = getfs(dev)
+    dev, err = getdisk(dev)
     if not dev then return nil, err end
     local fh = dev.open(path, mode)
     if fh == 0 then return nil, "no such file" end
@@ -30,44 +32,35 @@ function open(dev, path, mode)
     return fh
 end
 
-function write(dev, handle, data)
+function diskio.write(dev, handle, data)
     checkArg(1, dev, "table")
-    computer.pushSignal("kern.fs_write", dev.addr, handlepaths[dev][handle])
+    computer.pushSignal("kern.disk_write", dev.addr, handlepaths[dev][handle])
     return dev.write(handle, data)
 end
 
-function read(dev, handle, count)
+function diskio.close(dev, handle)
     checkArg(1, dev, "table")
-    return dev.read(handle, count)
-end
-
-function seek(dev, handle, whence, offset)
-    checkArg(1, dev, "table")
-    return dev.seek(handle, whence, offset)
-end
-
-function close(dev, handle)
-    checkArg(1, dev, "table")
-    computer.pushSignal("kern.fs_close", dev.addr, handlepaths[dev][handle])
+    computer.pushSignal("kern.disk_close", dev.addr, handlepaths[dev][handle])
     table.remove(handlepaths[dev], handle)
     return dev.close(handle)
 end
 
-function mkdir(dev, path)
+function diskio.mkdir(dev, path)
     checkArg(1, dev, "table")
-    computer.pushSignal("kern.fs_newdir", dev.addr, path)
+    computer.pushSignal("kern.disk_newdir", dev.addr, path)
     return dev.makeDirectory(path)
 end
 
-function remove(dev, path)
+function diskio.remove(dev, path)
     checkArg(1, dev, "table")
-    computer.pushSignal("kern.fs_remove", dev.addr, path)
+    computer.pushSignal("kern.disk_remove", dev.addr, path)
     return dev.remove(path)
 end
 
-function rename(dev, oldpath, newpath)
+function diskio.rename(dev, oldpath, newpath)
     checkArg(1, dev, "table")
-    computer.pushSignal("kern.fs_move", dev.addr, oldpath, newpath)
+    computer.pushSignal("kern.disk_move", dev.addr, oldpath, newpath)
     return dev.rename(oldpath, newpath)
 end
 
+return diskio

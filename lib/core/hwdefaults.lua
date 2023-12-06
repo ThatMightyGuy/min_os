@@ -1,4 +1,4 @@
-local hwaccess = require("/lib/hwaccess")
+local hwaccess = require("/lib/core/hwaccess")
 local hwdefaults = {
     filesystem=computer.getBootAddress()
 }
