@@ -35,3 +35,11 @@ function require(path)
     bootfs.close(file)
     return load(lib)()
 end
+
+function _G.dofile(filename)
+    local program, reason = loadfile(filename)
+    if not program then
+        return error(reason .. ':' .. filename, 0)
+    end
+    return program()
+end

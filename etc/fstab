@@ -1,2 +1,3 @@
-# boot drive, fs root
-nil	/
+return {
+    {name="/", addr=nil}
+}

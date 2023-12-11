@@ -1,0 +1,36 @@
+local hwdefaults = require("/lib/core/hwdefaults")
+local fs = require("/lib/core/fs")
+
+local target = {
+    description="Mount filesystems in /etc/fstab",
+    dependencies={}
+}
+
+target.status = {
+    state="ready"
+}
+
+function target.start()
+    target.status.state = "running"
+
+    local fstab, err = loadfile("/etc/fstab")
+
+    if not fstab then return target.stop(err) end
+
+    for _, entry in ipairs(fstab()) do
+        if entry.addr then
+            fs.mount(entry.name, proxy(entry.addr))
+        else
+            fs.mount(entry.name, hwdefaults.proxy("filesystem"))
+        end
+    end
+
+    target.stop()
+end
+
+function target.stop(reason)
+    target.status.state = "dead"
+    if reason then target.status.state = "dead ("..reason..")" end
+end
+
+return target
