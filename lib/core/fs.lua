@@ -1,4 +1,4 @@
-local stream = require("/lib/stream")
+local stream = require("/lib/interface/istream")
 
 local filesystem = {}
 

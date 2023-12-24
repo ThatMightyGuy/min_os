@@ -1,0 +1,32 @@
+# NAME
+cooperative - cooperative multitasking best practices in min_os
+# SYNOPSIS
+See the individual manual pages for details.
+# DESCRIPTION
+Because Lua does not support preemption, your programs should give up control to each other using `yield()` calls.
+The best time to call `yield()` is when you are about to block execution for extended periods of time due to a loop or a certain function call, or you're waiting for something, in which case, ask yourself if it's vital if you get the timing right, and if not, consider calling `timed_yield(millis)` instead so that other processes could do their stuff in the meantime.
+
+timed_yield passes control over to the next process and puts the current process at the head of the queue. If that process also uses `timed_yield`, it will be also put in front.
+
+This means that while the system is not busy just waiting for a network packet and executes the next processes in the meantime, a process could take a spectacularly long time before yielding, thus way overshooting the time you specified.
+
+If you do not yield, the system will appear to hang while the process executes. This also means that your programs will run in a queue, one after another, and if they all never yield while running in the background, you will never get to interact with the system, at least, until they stop or crash.
+
+Now, for the best practices:
+
+* If you need to wait for over a second, use `timed_yield()`.
+* If you need to wait for less than a second, use `sleep()`.
+* If you're about to call a function that takes ages to return, yield before it.
+* * Probably after too.
+* Ensure user input is responsive.
+* Handle SIGTERM.
+
+
+Things you should never do:
+
+* Yielding often is usually not helpful.
+* Yielding rarely is never helpful.
+* Yielding never only makes sense for extremely short programs.
+* Never busy wait. Use `sleep()` or `timed_yield()` instead.
+* Yielding in a fast loop is probably not a good idea.
+
