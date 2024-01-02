@@ -2,6 +2,8 @@
 
 local bootfs = proxy(computer.getBootAddress())
 
+local libs = {}
+
 if not bootfs then return panic("base", "no boot fs found") end
 
 local function getname(path)
@@ -13,6 +15,7 @@ local function parentpath(path)
 end
 
 function require(path)
+    if libs[path] then return libs[path] end
     path = getname(path)
     local dir = parentpath(path)
     local list = bootfs.list(dir)
@@ -33,7 +36,9 @@ function require(path)
         lib = lib..(s or "")
     until not s
     bootfs.close(file)
-    return load(lib)()
+    lib = load(lib)()
+    libs[path] = lib
+    return lib
 end
 
 function _G.dofile(filename)
